@@ -12,6 +12,10 @@
     <meta name="author" content="AZN Vision">
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
 
+    <!-- PWA Installation & Offline Support Manifest -->
+    <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22LifeFlow%20PRO%22%2C%22short_name%22%3A%22LifeFlow%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23030712%22%2C%22theme_color%22%3A%22%2310b981%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fcdn-icons-png.flaticon.com%2F512%2F3602%2F3602123.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
+    <meta name="theme-color" content="#10b981">
+
     <!-- GEO & OpenGraph Metadata (Social Media & Generative Engines) -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="LifeFlow PRO - Ultimate Daily Routine & Islamic Prayer Reminder">
@@ -34,7 +38,7 @@
           "applicationCategory": "ProductivityApplication",
           "operatingSystem": "All",
           "browserRequirements": "Requires JavaScript. Requires HTML5.",
-          "softwareVersion": "3.0.0-Enterprise",
+          "softwareVersion": "3.2.0-Enterprise",
           "description": "Enterprise-grade web application for daily task scheduling, water intake tracking, and automated Islamic Prayer (Azan) reminders.",
           "author": {
             "@type": "Organization",
@@ -56,7 +60,7 @@
               "name": "Does LifeFlow PRO work offline?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Yes, LifeFlow PRO uses browser LocalStorage to save all custom alarms, daily routines, and hydration records locally on your device."
+                "text": "Yes, LifeFlow PRO uses browser LocalStorage and Service Workers to save all custom alarms, daily routines, and hydration records locally on your device for complete offline functionality."
               }
             },
             {
@@ -383,8 +387,24 @@ OPTIMIZATION MATRIX (SEO, GEO, AEO, AIO, NEO):
     <audio id="audioAzan" src="https://www.islamcan.com/audio/adhan/azan1.mp3" preload="auto"></audio>
     <audio id="audioChime" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
 
-    <!-- JavaScript Application Engine -->
+    <!-- JavaScript Application Engine & Service Worker Registration -->
     <script>
+        // Inline Service Worker Registration for PWA Offline Functionality
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                self.addEventListener('install', (e) => { self.skipWaiting(); });
+                self.addEventListener('activate', (e) => { clients.claim(); });
+                self.addEventListener('fetch', (e) => {
+                    e.respondWith(
+                        fetch(e.request).catch(() => caches.match(e.request))
+                    );
+                });
+            `;
+            const blob = new Blob([swCode], { type: 'text/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(swUrl).catch(err => console.log('PWA ServiceWorker error:', err));
+        }
+
         let masterSoundEnabled = true;
 
         function toggleMasterSound() {
@@ -406,7 +426,6 @@ OPTIMIZATION MATRIX (SEO, GEO, AEO, AIO, NEO):
         // Live Clock Updater & Live Alarm Scheduler Loop
         setInterval(() => {
             const now = new Date();
-            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             document.getElementById('liveClock').innerText = now.toLocaleTimeString();
 
             // Background Alarm Checker
@@ -468,11 +487,13 @@ OPTIMIZATION MATRIX (SEO, GEO, AEO, AIO, NEO):
             { id: 1, title: 'Fajr Namaz & Azan', time: '05:00', category: 'prayer', tune: 'azan', active: true },
             { id: 2, title: 'Morning Glass of Water', time: '07:00', category: 'water', tune: 'gentle', active: true },
             { id: 3, title: 'Hourly Water Reminder (9 AM)', time: '09:00', category: 'water', tune: 'gentle', active: true },
-            { id: 4, title: 'Dhuhr Namaz & Azan', time: '13:15', category: 'prayer', tune: 'azan', active: true },
-            { id: 5, title: 'Asr Namaz & Azan', time: '16:45', category: 'prayer', tune: 'azan', active: true },
-            { id: 6, title: 'Maghrib Namaz & Azan', time: '18:10', category: 'prayer', tune: 'azan', active: true },
-            { id: 7, title: 'Isha Namaz & Azan', time: '19:45', category: 'prayer', tune: 'azan', active: true },
-            { id: 8, title: 'Sleep & Wind Down', time: '23:00', category: 'routine', tune: 'bell', active: true }
+            { id: 4, title: 'Hourly Water Reminder (10 AM)', time: '10:00', category: 'water', tune: 'gentle', active: true },
+            { id: 5, title: 'Dhuhr Namaz & Azan', time: '13:15', category: 'prayer', tune: 'azan', active: true },
+            { id: 6, title: 'Hourly Water Reminder (2 PM)', time: '14:00', category: 'water', tune: 'gentle', active: true },
+            { id: 7, title: 'Asr Namaz & Azan', time: '16:45', category: 'prayer', tune: 'azan', active: true },
+            { id: 8, title: 'Maghrib Namaz & Azan', time: '18:10', category: 'prayer', tune: 'azan', active: true },
+            { id: 9, title: 'Isha Namaz & Azan', time: '19:45', category: 'prayer', tune: 'azan', active: true },
+            { id: 10, title: 'Sleep & Wind Down', time: '23:00', category: 'routine', tune: 'bell', active: true }
         ];
 
         let reminders = JSON.parse(localStorage.getItem('lifeflow_reminders')) || defaultReminders;
